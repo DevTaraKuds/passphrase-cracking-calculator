@@ -8,13 +8,6 @@ This project is part of a 4-week cybersecurity habit-building series. Week 1 foc
 
 #DontMakeItEasyForThem
 
-## Features
-* **Real-Time Entropy Calculation:** Adjust sliders to see how length and character sets impact mathematical security instantly.
-* **AI-Era Cracking Estimates:** Calculates time-to-crack assuming a modern automated hardware rig guessing at a rate of 100 billion combinations per second.
-* **Diceware Math:** Passphrase entropy is based on the standard 7,776-word Diceware dictionary pool.
-* **Zero Dependencies:** A single, self-contained HTML file utilizing vanilla HTML, CSS, and JavaScript. No npm, webpack, or build tools required.
-* **Responsive Design:** Mobile-friendly CSS grid layout that looks great on desktop and mobile browsers.
-
 ## 🚀 Getting Started
 
 ### Run Locally
@@ -22,3 +15,19 @@ Since this is a self-contained file, running it is instantaneous:
 1. Clone the repository:
    ```bash
    git clone [https://github.com/yourusername/entropy-calculator.git](https://github.com/yourusername/entropy-calculator.git)
+
+### Access Online
+You can access this webpage directly by visiting [here](https://devtarakuds.github.io/passphrase-cracking-calculator/)
+
+## Features
+* **Real-Time Entropy Calculation:** Adjust sliders to see how length and character sets impact mathematical security instantly.
+* **AI-Era Cracking Estimates:** Calculates time-to-crack assuming a modern automated hardware rig guessing at a rate of 100 billion combinations per second.
+* **Diceware Math:** Passphrase entropy is based on the standard 7,776-word Diceware dictionary pool.
+* **Zero Dependencies:** A single, self-contained HTML file utilizing vanilla HTML, CSS, and JavaScript. No npm, webpack, or build tools required.
+* **Responsive Design:** Mobile-friendly CSS grid layout that looks great on desktop and mobile browsers.
+
+## Contributing 🤝
+Contributions, issues, and feature requests are welcome! Feel free to fork this project and submit pull requests if you want to add new features, like custom dictionary sizes or additional interactive elements.📄 
+
+## License
+This project is open-source and available under the MIT License. Feel free to use, modify, and distribute it in your own security awareness campaigns.
