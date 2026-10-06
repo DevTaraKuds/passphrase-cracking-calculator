@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password vs Passphrase Calculator</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #22c55e;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 0.5rem; }
+        p { text-align: center; color: #475569; margin-bottom: 2rem; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .card {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: var(--text);
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #334155;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .checkbox-group label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .checkbox-group label:hover {
+            background: #e2e8f0;
+        }
+        .result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .entropy-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+            margin: 0.5rem 0;
+            color: var(--text);
+        }
+        .time-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        .red { color: var(--danger); }
+        .yellow { color: var(--warning); }
+        .green { color: var(--success); }
+        .info-text {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🛑 Complexity vs. Length</h1>
+    <p>Adjust the sliders below to see why a 4-word passphrase beats a complex password. <br><em>Assuming a modern AI cracking rig guessing 100 Billion times per second.</em></p>
+
+    <div class="grid">
+        <!-- Traditional Password Card -->
+        <div class="card">
+            <h2>Traditional Password</h2>
+            
+            <div class="control-group">
+                <label>Password Length: <span id="pwd-len-val">8</span> chars</label>
+                <input type="range" id="pwd-len" min="6" max="24" value="8">
+            </div>
+
+            <div class="control-group">
+                <label>Character Sets Used:</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="chk-lower" checked> a-z</label>
+                    <label><input type="checkbox" id="chk-upper" checked> A-Z</label>
+                    <label><input type="checkbox" id="chk-num" checked> 0-9</label>
+                    <label><input type="checkbox" id="chk-sym" checked> !@#</label>
+                </div>
+            </div>
+
+            <div class="result" id="pwd-result">
+                <div style="font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 0.875rem;">Entropy (Bits)</div>
+                <span class="entropy-value" id="pwd-entropy">0</span>
+                <div class="time-value" id="pwd-time">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Passphrase Card -->
+        <div class="card">
+            <h2>Random Passphrase</h2>
+            
+            <div class="control-group">
+                <label>Number of Words: <span id="pass-len-val">4</span> words</label>
+                <input type="range" id="pass-len" min="3" max="10" value="4">
+                <span class="info-text">*Using standard 7,776-word Diceware dictionary</span>
+            </div>
+
+            <div class="result" id="pass-result" style="margin-top: 3.3rem;">
+                <div style="font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 0.875rem;">Entropy (Bits)</div>
+                <span class="entropy-value" id="pass-entropy">0</span>
+                <div class="time-value" id="pass-time">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CRACK_GUESSES_PER_SEC = 100000000000; // 100 Billion/sec
+
+        function formatTime(seconds) {
+            if (seconds < 1) return "Cracked Instantly";
+            if (seconds < 60) return `Cracked in ${Math.round(seconds)} Seconds`;
+            if (seconds < 3600) return `Cracked in ${Math.round(seconds/60)} Minutes`;
+            if (seconds < 86400) return `Cracked in ${Math.round(seconds/3600)} Hours`;
+            if (seconds < 31536000) return `Cracked in ${Math.round(seconds/86400)} Days`;
+            
+            let years = seconds / 31536000;
+            if (years < 100) return `${Math.round(years)} Years`;
+            if (years < 1000) return `${Math.round(years/100)} Centuries`;
+            if (years < 1000000) return `${Math.round(years/1000)} Millennia`;
+            return "Millions of Years (Unhackable)";
+        }
+
+        function getColorClass(entropy) {
+            if (entropy < 60) return "red";
+            if (entropy < 80) return "yellow";
+            return "green";
+        }
+        
+        function updateBorderColor(elementId, entropy) {
+            const el = document.getElementById(elementId);
+            if (entropy < 60) el.style.borderColor = 'var(--danger)';
+            else if (entropy < 80) el.style.borderColor = 'var(--warning)';
+            else el.style.borderColor = 'var(--success)';
+            
+            el.style.backgroundColor = entropy < 60 ? '#fef2f2' : (entropy < 80 ? '#fffbeb' : '#f0fdf4');
+        }
+
+        function calculate() {
+            // Password Calculation
+            let pwdLen = parseInt(document.getElementById('pwd-len').value);
+            document.getElementById('pwd-len-val').innerText = pwdLen;
+            
+            let poolSize = 0;
+            if (document.getElementById('chk-lower').checked) poolSize += 26;
+            if (document.getElementById('chk-upper').checked) poolSize += 26;
+            if (document.getElementById('chk-num').checked) poolSize += 10;
+            if (document.getElementById('chk-sym').checked) poolSize += 32;
+
+            let pwdEntropy = poolSize > 0 ? pwdLen * Math.log2(poolSize) : 0;
+            let pwdSeconds = Math.pow(2, pwdEntropy) / CRACK_GUESSES_PER_SEC;
+
+            document.getElementById('pwd-entropy').innerText = pwdEntropy.toFixed(1);
+            let pwdTimeEl = document.getElementById('pwd-time');
+            pwdTimeEl.innerText = poolSize > 0 ? formatTime(pwdSeconds) : "Select a character set";
+            pwdTimeEl.className = "time-value " + getColorClass(pwdEntropy);
+            updateBorderColor('pwd-result', pwdEntropy);
+
+            // Passphrase Calculation
+            let passLen = parseInt(document.getElementById('pass-len').value);
+            document.getElementById('pass-len-val').innerText = passLen;
+            
+            let passEntropy = passLen * Math.log2(7776);
+            let passSeconds = Math.pow(2, passEntropy) / CRACK_GUESSES_PER_SEC;
+
+            document.getElementById('pass-entropy').innerText = passEntropy.toFixed(1);
+            let passTimeEl = document.getElementById('pass-time');
+            passTimeEl.innerText = formatTime(passSeconds);
+            passTimeEl.className = "time-value " + getColorClass(passEntropy);
+            updateBorderColor('pass-result', passEntropy);
+        }
+
+        // Add Event Listeners
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', calculate);
+        });
+
+        // Initial Calculation
+        calculate();
+    </script>
+</body>
+</html>
